@@ -1,23 +1,21 @@
 import logo from './logo.svg';
+import TodoList from './components/Todo/TodoList';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
+  const [user, setUser] = useState(''); // Name of the user
+  useEffect(() => {
+    let name = prompt("Please enter your name");
+    setUser(name);
+  },[])
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <div className = "header">
+        <span>Todo Lists</span>
+        {user && <span className = "user-name"> User: {user}</span>}
+      </div>
+      <TodoList />
     </div>
   );
 }
