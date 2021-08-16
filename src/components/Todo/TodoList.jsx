@@ -1,12 +1,23 @@
 import React, { useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-const TodoList = () => {
+const TodoList = ({ user }) => {
+
+
+
   const [value, setValue] = useState('');
   const [todoLists, setTodoLists] = useState([]);
   const [completedTasks, setCompletedTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(undefined)
   const taskRef = useRef([]);
+
+  useEffect(() => {
+    let todoListFromLocalStorage = JSON.parse(localStorage.getItem('todoList'));
+    let completedList = JSON.parse(localStorage.getItem('completed'));
+    todoListFromLocalStorage && setTodoLists(todoListFromLocalStorage);
+    completedList && setCompletedTasks(completedList);
+  }, [])
 
   // Function to capture the input change of input field
   const _onChange = (e) => {
@@ -15,7 +26,7 @@ const TodoList = () => {
   }
   // Add the todo item to the list on click of enter
   const _onKeyPress = (e) => {
-    if (e.charCode == 13) {
+    if (e.charCode == 13 && value.trim().length > 0) {
       let updatedList = [...todoLists];
       if (selectedTask) {
         let editedTask = {
@@ -32,9 +43,9 @@ const TodoList = () => {
         });
         setTodoLists(updatedList);
         setValue('');
-        setSelectedTask(undefined)
+        setSelectedTask(undefined);
+        localStorage.setItem('todoList', JSON.stringify(updatedList));
       } else {
-
         let id = Math.floor(Math.random() * 1000);
         let newTask = {
           taskId: id,
@@ -43,6 +54,7 @@ const TodoList = () => {
         }
         updatedList.push(newTask);
         setTodoLists(updatedList);
+        localStorage.setItem('todoList', JSON.stringify(updatedList));
         setValue('');
       }
 
@@ -64,6 +76,8 @@ const TodoList = () => {
     })
     setTodoLists(todo);
     setCompletedTasks(completedList);
+    localStorage.setItem('todoList', JSON.stringify(todo));
+    localStorage.setItem('completed', JSON.stringify(completedList));
   }
   //Function to edit the task in the list
   const _onEditClick = (e, index) => {
@@ -80,19 +94,37 @@ const TodoList = () => {
     let updatedTask = [];
     updatedTask = todoLists.filter(task => task.taskId != deletedTask.taskId);
     setTodoLists(updatedTask);
+    localStorage.setItem('todoList', JSON.stringify(updatedTask));
   }
 
   //Function to capture the position of drag item in the list
   const handleOnDragEnd = (result) => {
-    if(!result.destination) return
+    if (!result.destination) return
     const items = [...todoLists];
-    const [reorderedItem] = items.splice(result.source.index,1);
-    items.splice(result.destination.index,0,reorderedItem);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
     setTodoLists(items);
+    localStorage.setItem('todoList', JSON.stringify(items));
   }
 
+  //Reset all the tasks
+  const _onReset = (e) => {
+    localStorage.removeItem('todoList');
+    localStorage.removeItem('completed');
+    setTodoLists([]);
+    setCompletedTasks([]);
+  }
+
+  useEffect(() => {
+    let userName = JSON.parse(localStorage.getItem('userName'));
+    if (!userName) {
+      _onReset();
+
+    }
+  }, [user])
+
   return (
-    <div className = "todo-container">
+    <div className="todo-container">
       <input
         name='field'
         value={value}
@@ -100,7 +132,7 @@ const TodoList = () => {
         onKeyPress={_onKeyPress}
         className="task-input"
         ref={taskRef}
-        placeholder = "Enter the task"
+        placeholder="Enter the task"
       />
       <DragDropContext onDragEnd={handleOnDragEnd}>
         <Droppable droppableId="todo">
@@ -119,7 +151,7 @@ const TodoList = () => {
                             className="checkbox"
                             checked={task.isCompleted}
                             onChange={(e) => { onChangeTask(e, task, index) }}
-                            />
+                          />
                           <span>{task.taskName}</span>
                         </div>
                         <div style={{ display: 'flex' }}>
@@ -137,9 +169,9 @@ const TodoList = () => {
         </Droppable>
 
       </DragDropContext>
-      {todoLists.length == 0 && completedTasks.length ==0  && <div className = "no-task">No task(s) added</div>}
-      {completedTasks.length > 0 && todoLists.length == 0 && <div className = "all-task-complete">All task(s) are performed</div>}
-      <ul className = "lists">
+      {todoLists.length == 0 && completedTasks.length == 0 && <div className="no-task">No task(s) added</div>}
+      {completedTasks.length > 0 && todoLists.length == 0 && <div className="all-task-complete">All task(s) are performed</div>}
+      <ul className="lists">
         {completedTasks.map((task, index) => {
           return (
             <li key={task.taskId} className="completed-task">
@@ -154,6 +186,7 @@ const TodoList = () => {
           )
         })}
       </ul>
+      <button className="btn-reset" onClick={_onReset}>Reset</button>
     </div>
   )
 };
